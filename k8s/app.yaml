@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metrics-api
+  namespace: metrics-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: metrics-api
+  template:
+    metadata:
+      labels:
+        app: metrics-api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics/prometheus"
+    spec:
+      containers:
+        - name: server
+          image: highload-final-app:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: REDIS_ADDR
+              value: "redis:6379"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: metrics-api
+  namespace: metrics-api
+spec:
+  selector:
+    app: metrics-api
+  ports:
+    - port: 80
+      targetPort: 8080
